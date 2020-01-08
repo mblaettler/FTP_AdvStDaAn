@@ -120,3 +120,128 @@ The concept of a LOESS regression is the following:
 	\end{enumerate}
 \end{enumerate}
 
+\subsubsection{Residuals}
+
+While the error term $E_i$ is unobservable it can be estimated by analysing the residuals:
+
+\begin{equation*}
+\vec{R} = \vec{Y} - \bm{X}\vec{\hat{\beta}} = \vec{Y} - \bm{H}\vec{Y} = (\bm{I}-\bm{H})\vec{Y}
+\end{equation*}
+\begin{equation*}
+\bm{H} = \bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T
+\end{equation*}
+
+\paragraph{Scaled residuals}
+\begin{equation*}
+\breve{R_i} = \frac{R_i}{\sqrt{1-H_{ii}}}, i=1,...,n
+\end{equation*}
+
+\paragraph{Standardised residuals}
+\begin{equation*}
+\tilde{R_i} = \frac{R_i}{\sqrt{\hat{\sigma}^2(1-H_{ii}})}, i=1,...,n
+\end{equation*}
+
+\subsubsection{Diagnostic plots}
+\begin{description}
+	\tightlist
+	\item[Tukey-Anscombe plot] Also called residual plot. Residuals against the fitted values: Is used to detect nonconstant expectation of the errors.
+	\item[scale-lcation plot] The square-root of the absolute values of the standardized residuals against the fitted values: Is used to detect nonconstant variance of the errors.
+	\item[normal Q-Q plot] Ordered standardized residuals against their expected values under normality: Is used to detect non normality of the errors.
+	\item[Residuals against time and/or space variables] Is used to detect stochastic dependency in the errors.
+	\item[sensitivity plot] Standardized residuals against leverage overlaid by Cook’s distance contours: Is used to detect too influential observation in the data.
+\end{description}
+
+\paragraph{Cook's distance}
+
+\begin{equation*}
+d_i = \frac{1}{p}\tilde{R_i}^2\frac{H_{ii}}{1-H_{ii}}
+\end{equation*}
+
+\textbf{Guideline:} Practical experience has shown that observations with a Cook’s distance $d_i$ larger than 1 can be considered as too influential.
+
+\paragraph{Boostrap simulations}
+Is an informal way to check stochastic fluctuation:
+\begin{enumerate}
+	\tightlist
+	\item Generate observations $y_i^*$ according to the model using new random errors.\\
+	$y_i^*=\hat{y_i}+\hat{\sigma}\cdot e_i^*$.
+	\item Calculate the regression fit with the explanatory variables given in the data set and the newly generated response values $y_i^*$. Add the new lines to the plots.
+	\item Repeat n times (n=19 for 5\% significance level).
+\end{enumerate}
+
+\subsubsection{Multicollinearity}
+Is the term if some predictors are a linear combination of others.\\
+Detect collinearity:
+\begin{itemize}
+	\tightlist
+	\item Examination of the correlation matrix of the predictors will reveal large pairwise collinearities.
+	\item The Variance Inflation Factor (VIF).\\
+	\begin{lstlisting}
+mtc3.lm0 <- lm(mpg ~ ., data=mtcars3)
+vif(mtc3.lm0)
+	\end{lstlisting}
+	\textbf{Guideline:} If VIF is larger than 5 to 10 for any variable then multicollinearity is of a dangerous size and needs to be addressed.
+\end{itemize}
+
+\subsubsection{Categorical predictors}
+If a predictor variable is categorical (e.g. a tool type) and has two levels, an indicator variable is set up:
+
+\begin{equation*}
+x_i = \begin{cases}
+0 & if \; tool\; type\; A \\
+1 & if\; tool\; type\; B
+\end{cases}
+\end{equation*}
+
+In case of more than two levels, multiple indicator variables must be introduced:
+
+\begin{tabular}{lll}
+	$x_i^{2,2}$ & $x_i^{2,3}$  &  \\ 
+	0 & 0 & for observation of type A \\ 
+	1 & 0 & for observation of type B \\ 
+	0 & 1 & for observation of type C \\ 
+\end{tabular}
+
+\subsubsection{Prediction error sum of squares (PRESS)}
+In predictive modelling, the model are assessed often by the leave-one-out method. In this procedure, one observation is selected and the regression model is fitted to the remaining n-1 observations. With this we find the \textbf{prediction error for observation i}.
+\begin{equation*}
+r_{(i)}=y_i-\hat{y_(i)}
+\end{equation*}
+The \textbf{PRESS} is then defined by the sum of squares of the n prediction errors:
+\begin{equation*}
+PRSS = \sum_{i=1}^{n}r^2_{(i)} = \sum_{i=1}^{n}(y_i-\hat{y_{(i)}})^2
+\end{equation*}
+
+\subsubsection{Cross validation}
+Cross validation is a model evaluation technique that tells how well the results will generalise to an independent dataset from the same population.\\
+Basic idea (as example a 5-fold cross validation):
+\begin{enumerate}
+	\tightlist
+	\item Split the data into n folds (for example chunks of 20\%)
+	\item Use one fold for testing and the other for training
+	\item Repeat step 2 n times until every fold is once used for testing
+	\item Compute mean squared prediction error (MSPE)
+	\begin{equation*}
+		MSPE_{CV}=\frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i^{Test} - y_i)^2
+	\end{equation*}
+\end{enumerate}
+
+\subsubsection{Model building process}
+
+\begin{enumerate}
+	\tightlist
+	\item Clarify the task (purpose? goal?); are there already model approaches?
+	\item Data Screening and Processing
+	\item Model fitting; preferably with robust methods
+	\item Residual and sensitivity analysis; does this dataset help solve the task? -> Go back to 3, 2, 1 depending on the result
+	\item Variable selection; treat collinearities if necessary -> Go back to 3 depending on the result
+	\item Checking model adequacy
+	\begin{itemize}
+		\tightlist
+		\item Residual and sensitivity analysis with selected model(s)
+		\item Check plausibility; match model(s) with subject matter expertise
+		\item Consider out-of-sample validation (i.e., validation with unused data), especially if the model is to be used for prediction.
+	\end{itemize}
+	-> Go back to 1, 2, 3, ... depending on the result
+	\item Reporting: It is key to be honest and openly report all data manipulations and decisions that were made.
+\end{enumerate}
