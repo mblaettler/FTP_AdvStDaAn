@@ -245,3 +245,94 @@ Basic idea (as example a 5-fold cross validation):
 	-> Go back to 1, 2, 3, ... depending on the result
 	\item Reporting: It is key to be honest and openly report all data manipulations and decisions that were made.
 \end{enumerate}
+
+\subsection{Advanced topics in linear regression modelling}
+
+\subsubsection{Weighted least squares}
+
+For the least squares regression to work, it is required to have an Error $\vec{E} \sim \mathcal{N}(\vec{0}, \sigma^2\bm{I})$ with $\bm{I}$ being the $n\times n$ identity matrix. In case of a \textbf{non-constant variance} called \textbf{heteroscedasticity} we need \textbf{weighted least squares} fitting. Therefore $\bm{I}$ is replaces with
+\begin{equation*}
+\bm{W}=diag[\frac{1}{w_1},\frac{1}{w_2}, ..., \frac{1}{w_n}] \neq \bm{I}
+\end{equation*}
+
+This allows us to give a weight for the samples we are more certain for the maximum likelihood calculation:
+
+\begin{equation*}
+\bm{X}^T\bm{W}\vec{R} = \vec{0}\;\; or \;\;
+\bm{X}^T\bm{W}(\vec{Y}-\bm{X}\hat{\vec{\beta}}) = 0
+\end{equation*}
+
+\subsubsection{Robust fitting}
+While real data is never exactly Gaussion distributed we need to find a model which is useful in many situations - hence for the majority of observations. The ordinary least squares (OLS) estimator cannot cope with this situation. A \textbf{robust} estimator is required.
+
+\paragraph{The oldest, informal approach}
+
+An easy common practise is to manually examine the data for obvious outliers and the manual removal of those. But this approach is problematic:
+\begin{itemize}
+	\tightlist
+	\item Difficult or even impossible to identify outliers
+	\item It is impossible to examine the relationship within the data without having a model in the first place
+	\item The process of finding outliers is hard to formalize and therefore hard to automatize
+	\item Inference based on applying a standard procedure to the cleaned data will be based on distribution theory which ignores the cleaning process and hence will be inapplicable and possibly misleading
+\end{itemize}
+
+\paragraph{Building a robust fitter}
+By introducing weighted samples during the fitting process, samples with high residuals get applied a smaller wieght and therefore their influence is reduced.
+
+\paragraph{M-estimator}
+While the maximum likelihood estimator (OLS) tries to minimize the absolute residuals, the estimators belonging to the classes of M-estimators define a function $\rho$ which transforms the residuals (e.g. by clipping). Resulting in the following optimization function:
+\begin{equation*}
+\sum_{i=1}^{n}\psi(\tilde{r_i}) \cdot \vec{x_i} = \vec{0}
+\end{equation*}
+\begin{equation*}
+\tilde{r_i} = \frac{Y_i-\vec{x_i}^T\vec{\hat{\beta_M}}}{\sigma}
+\end{equation*}
+
+The scale parameter $\sigma$ needs to be estimated. One possibility is to use the standard deviation, however this is extremely non-robust. It has been shown that a robust estimation is needed, called the MAV (=median of absolute value).
+\begin{equation*}
+	\sigma = s_{MAV} = \frac{median_i(|r_i|)}{0.6745}
+\end{equation*}
+
+\paragraph{MM-estimator}
+\textbf{M}odified \textbf{M-estimator} improve the estimation of $\sigma$ since the M-estimator is not robust against leverage points. It uses the following procedure:
+\begin{enumerate}
+	\tightlist
+	\item Find “good” initial values by optimising a slightly modified criterion (also called S-estimator)
+	\item Apply a M-estimator but determine $\sigma$ from the estimation done in step 1.
+\end{enumerate}
+
+\subsubsection{Fitting smooth functions}
+Another robust estimator is the \textbf{LOESS smoother} (\lstinline{loess.smooth}). It can either be fitted using an M-estimator (\lstinline{family="symmetric"}) oe by OLE (\lstinline{family="gaussian"}).
+
+\paragraph{Cubic Spine Smoothing}
+Is an alternative approach to local parametric regression for estimating a smooth function $f(\cdot)$ by a linear combination of some explicitly defined basis functions $h_m(\cdot)$. The number M controls the smoothness and the complexity of $f(\cdot)$.
+
+\begin{equation*}
+f(x) = \sum_{m=1}^{M}\gamma_m h_m(x)
+\end{equation*}
+
+This is highly subjected to overfitting for large M. Therefore the minimization function must penalized in case of high complexity. This can be achieved by introducing a function measuring the curvature.
+\begin{equation*}
+\sum_{i=1}^{n}(y_i-f(x_i))^2 + \lambda \int_{-\infty}^{\infty}f''(u) du
+\end{equation*}
+
+When analysing the above function it can be seen that $\lambda$ can also be fitted by doing a cross validation (e.g. leave-one-out) that it minimizes the expected squared prediction error.
+
+\paragraph{Additive regression model and backfitting algorithm}
+The cubic spine smoothing can be generalised to \textbf{(generalised) additive models}:
+\begin{equation*}
+Y_i = \beta_0 + f_1(x_i^{(1)}) + ... + f_m(x_i^{(m)}) + E_i
+\end{equation*}
+
+To estimate the flexible components for each predictor the backfitting algorithm is used:
+\begin{enumerate}
+	\tightlist
+	\item Initialize $\hat{\beta_0} = \bar{y}$ and $\hat{f_k}(\cdot)=0$ for all $k=1, ..., m$ predictor variables
+	\item Repeat for all $k=1, ..., m$ until convergence:
+	\begin{enumerate}
+		\tightlist
+		\item Compute the partial residual $\tilde{y_i}^{(k)} = y_i - \hat{\beta_0}-\sum_{j=1, j\neq k}^{m} \hat{f_j}(x_i^{(j)})$
+		\item Solve the 1-d smoothing problem using the data $(x_i^{(k)}, \tilde{y_i}^{(k)}) \rightarrow \hat{f_k}(\cdot)$
+		\item Center the estimated function to $\hat{f_k}(\cdot) \leftarrow \hat{f_k}(\cdot) - \frac{1}{n} \sum_{i=1}^{n} \hat{f_k}(x_i^{(k)})$
+	\end{enumerate}
+\end{enumerate}
