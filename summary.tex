@@ -1,0 +1,38 @@
+\documentclass[a4paper, 12pt, fleqn]{article}
+\usepackage{custom}
+\usepackage{titlepage}
+\usepackage[bottom]{footmisc}
+\usepackage{wrapfig}
+\usepackage{makeidx}
+
+%============STYLE PROPERTIES============
+\setlength{\parindent}{0pt}
+
+\graphicspath{{../}}
+
+%============PAGE PROPERTIES=============
+\newcommand{\revisiondate}{\today}
+\newcommand{\documenttitle}{FTP\_AdvStDaAn} % used for title in title and subtitle pages
+\newcommand{\authors}{Michael Blättler} %used for title page only
+\newcommand{\subtitle}{Summary} % used for title and subtitle pages
+\newcommand{\documentdesc}{Summary}
+\newcommand{\ort}{Hochschule Luzern Technik \& Architektur, Horw}
+
+%============REF-COMMANDS================
+\newcommand{\secref}[1]{\hyperref[{#1}]{\autoref*{#1}}}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+%============TIGHT LISTS=================
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\makeindex
+
+\begin{document}
+	\begin{titlepage}
+		\appendixGM
+		\thispagestyle{empty}
+	\end{titlepage}
+
+	\tableofcontents
+
+\end{document}
