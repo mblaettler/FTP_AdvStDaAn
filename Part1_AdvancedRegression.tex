@@ -1,0 +1,122 @@
+% !TeX spellcheck = en_GB
+\section{Part1: Advanced regression modelling}
+
+Depending on the response variable (the value we'd like to model) a different model must be choosen.
+
+\begin{tabular}{|l|l|}
+	\hline 
+	\textbf{Response} & \textbf{Model} \\ 
+	\hline 
+	Continuous (with condtant variance) & Multiple linear regression model \\ 
+	\hline 
+	Zero/one variate & Logistic regression model \\ 
+	\hline 
+	Counts & Loglinear model \\ 
+	\hline 
+	Continuous (with constant coefficient of variation) & Gamma regression model \\ 
+	\hline 
+	Censored survival times & Accelerated Failure Times Models \\
+	& Proportional hazard model \\
+	\hline 
+\end{tabular} 
+
+\subsection{Linear Regression (Recap)}
+
+Form: $y \approx \beta_0 + \beta_1 x_i^{(1)} + ... + \beta_m x_i^{(m)}$\\
+With $x_i^{1...m}$ being the \textbf{predictor variables} and $y$ the \textbf{response variable}. If $m=1$ the method is called \textbf{simple regression} otherwise \textbf{multiple regression}. While the \textbf{predictor variables} $x_i^{1...m}$ can be a non-linear combination of variables, the $\beta$s can only be multiplied (hence \textbf{linear regression}).
+
+\subsubsection{Example R-Code}
+\begin{lstlisting}
+library(datasets) # the dataset mtcars is located in this package
+str(mtcars) # Compactly displays the internal structure of the object
+summary(mtcars) # returns a six number summary of each variable in the data frame
+
+mtcars1 <- data.frame(lMPG=log(mtcars$mpg), wCyl=sqrt(mtcars$cyl),
+					  lDisp=log(mtcars$disp), lHP=log(mtcars$hp),
+					  drat=mtcars$drat, lWT=log(mtcars$wt),
+					  qsec=mtcars$qsec, VS=mtcars$vs, AM=mtcars$am,
+					  wGear=sqrt(mtcars$gear), wCarb=sqrt(mtcars$carb))
+
+mtc1.lm1 <- lm(lMPG ~ lDisp + lHP + lWT + drat + qsec + wCarb + wCyl
+               + wGear + VS + AM, data=mtcars1)
+\end{lstlisting}
+
+Inspecting the \lstinline{summary(mtc1.lm1)} output:
+\begin{lstlisting}
+Call:
+lm(formula = lMPG ~ lDisp + lHP + lWT + drat + qsec + wCarb + 
+wCyl + wGear + VS + AM, data = mtcars1)
+
+Residuals:
+Min       1Q   Median       3Q      Max 
+-0.16637 -0.06968  0.01446  0.05770  0.20108 
+
+Coefficients:
+Estimate Std. Error t value Pr(>|t|)  
+(Intercept)  3.733511   1.325541   2.817   0.0103 *
+lDisp       -0.167383   0.179541  -0.932   0.3618  
+lHP         -0.159416   0.134980  -1.181   0.2508  
+lWT         -0.377992   0.250297  -1.510   0.1459  
+drat         0.004172   0.074864   0.056   0.9561  
+qsec         0.014235   0.033289   0.428   0.6733  
+wCarb       -0.149562   0.115652  -1.293   0.2100  
+wCyl         0.188301   0.217927   0.864   0.3973  
+wGear        0.449734   0.264221   1.702   0.1035  
+VS          -0.040222   0.088789  -0.453   0.6552  
+AM          -0.054940   0.098564  -0.557   0.5831  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.1134 on 21 degrees of freedom
+Multiple R-squared:  0.9018,	Adjusted R-squared:  0.8551 
+F-statistic: 19.29 on 10 and 21 DF,  p-value: 2.097e-08
+\end{lstlisting}
+
+According to the F test for significance of regression, at least one of the explanatory variables is significant because its P-value of 3.649e-07 is smaller than 0.05. However, according to the marginal test none of the coefficients is significant on the 5\% level (except the intercept). This happens if the explanatory variables itself are (highly) correlated. To find a better model, a criterion must be chosen to find the optimal model.
+
+\subsubsection{Akaike's information criterion}
+A criterion to find better models:
+\begin{equation*}
+AIC = -2(maximized \: Log-Likelihood) + 2 \cdot \#estimates\: parameters
+\end{equation*}
+\begin{equation*}
+AIC = n\cdot log(\frac{1}{n}\sum_{i=1}^{n} R_i^2) + 2p + constant
+\end{equation*}
+-> The criterion needs to be minimized
+
+\paragraph{Use the R function \lstinline{step} to auto apply AIC}
+\mbox{}
+\begin{lstlisting}
+mtc1.vs <- step(mtc1.lm1,
+                scope=list(lower=~ 1,
+                           upper=~ lDisp + lHP + drat + lWT + qsec
+                                 + wCarb + fCyl + fVS + fAM + fGear))
+\end{lstlisting}
+
+While the variable \lstinline{mtc1.vs} now contains the model with the lowest AIC, a summary of the optimization process can be collected using \lstinline{mtc1.vs$anova}.
+
+\paragraph{Compare two models using \lstinline{anova}}
+ToDo %TODO
+
+\subsubsection{Local Regression (LOESS)}
+In comparison to linear model, where a \textbf{line} is fitted on the data, the LOESS regression can be used to fit a \textbf{curve}.
+
+The concept of a LOESS regression is the following:
+
+\begin{enumerate}
+	\tightlist
+	% See: https://www.youtube.com/watch?v=Vf7oJ6z2LCc
+	\item For each point
+	\begin{enumerate}
+		\tightlist
+		\item Set current point as \textbf{focal point}.
+		\item Fit a straight line (\lstinline{family="gaussian"}) or a parabola (\lstinline{family="symetric"}) for the window. Inside the window, the distance of the point to the focal point determines the weight of each point.
+		\item Set point at intercept with fitted line (\textbf{pre-fitted point})
+	\end{enumerate}
+	\item Calculate the difference for each point to the \textbf{pre-fitted point}
+	\item For each pre-fitted point
+	\begin{enumerate}
+		\item Fit a line again using, but this time using the wights based on the distance to the \textbf{pre-fitted point}.
+	\end{enumerate}
+\end{enumerate}
+
