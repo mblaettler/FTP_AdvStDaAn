@@ -391,7 +391,7 @@ log(odds) = log(\frac{\pi}{1-\pi}) = \eta = \beta_0 + \sum_{j=1}^{m} \beta_j x^{
 
 \paragraph{Empirical logits}
 
-Because the logit model is not defined for $g(0)$ and $g(1)$ (Latent variable $Z = g(Y)$) the empirical logits are often used:
+Because the logit model is not defined for $G^{-1}(0)$ and $G^{-1}(1)$ (Latent variable $Z = g(Y)$) the empirical logits are often used:
 \begin{equation*}
 Z_k = log(\frac{Y_k + 0.5}{m_k-Y_k+0.5})
 \end{equation*}
@@ -399,3 +399,74 @@ Z_k = log(\frac{Y_k + 0.5}{m_k-Y_k+0.5})
 \subsubsection{Maximum Likelihood Estimator (MLE)}
 
 While the previously introduced estimators (e.g. least squares estimator) is good for fitting continuous (Gaussian like) data, it is not suitable for binary response variables where the response is either 0 or 1. In comparison th MLE is better suited for fitting non Gaussian like data because it can work with any distribution since it fits the parameter of the distribution.
+
+\subsection{Generalised linear model}
+
+The components introduced for logistic regression can be summarized and generalized even further if the following properties are given:
+
+\begin{itemize}
+	\tightlist
+	\item A set of explanatory variables ($x^{(1)}, x^{(2)}, ..., x^{(m)}$)
+	\item A response variable $Y$ with expectation $E(Y)=\mu$
+	\item A link function $G^{-1} = g$ such that $g(\mu) = \vec{x}^T \vec{\beta}$
+	\item A distribution for the variability in $Y$
+\end{itemize}
+
+These conditions are met if the probability function $f$ of $Y$ can be written as
+\begin{equation*}
+f(y_i, \mu_i, \phi) = exp(\frac{y_i b(\mu_i)-c(\mu_i)}{\phi}w_i+d(y_i, \phi, w_i))
+\end{equation*}
+With:
+\begin{description}
+	\tightlist
+	\item[$b()$ and $c()$] Determine the specific distribution
+	\item[$d()$] Normalizes the function to a total of 1
+	\item[$\phi$] Dispersion parameter
+	\item[$w_i$] Known number but may vary from observation to observation.	It has the meaning of a weight.
+\end{description}
+
+This results in the following parameters for common distributions:
+
+\begin{tabular}{l||rr|rrcc}
+	\hline 
+	Distribution & $E(Y) = \mu$ & $var(Y)$ & $b(\mu)$ & $V(\mu)$ & $\phi$ & w \\
+	\hline
+	$Gaussion(\mu, \sigma^2)$ & $\mu$ & $\sigma^2$ & $\mu$ & 1 & $\sigma^2$ & 1\\
+	$Binomial(m, \pi)$ & $\pi$ & $\frac{1}{m}\pi(1-\pi)$ & $log(\frac{\mu}{1-\mu})$ & $\mu(1-\mu)$ & 1 & m\\
+	$Poisson(\lambda)$ & $\lambda$ & $\lambda$ & $log(\mu)$ & $\mu$ & 1 & 1\\
+	$Gamma(\alpha, \beta)$ & $\frac{\alpha}{\beta}$ & $\frac{\alpha}{\beta^2}$ & $-\frac{1}{\mu}$ & $\mu^2$ & $\frac{1}{\alpha}$ & 1\\
+	\hline
+\end{tabular}
+
+\paragraph{Link function}
+The corresponding inverse link function $G() = g^{-1}()$ should map the values of the linear predictor $\eta = \vec{x}^T \vec{\beta}$ to the support of the expected value of $Y$.\\
+Obvious link functions:
+\begin{description}
+	\item[Identity] $g(\mu) = \mu$ if $Y$ is not subject to any restrictions on $\mathbb{R}$
+	\item[Log] $g(\mu) = log(\mu)$ if $Y$ must be a positive real number
+	\item[Logit] $g(\mu) = logit(\mu)=log(\mu/(1-\mu)$ if $Y$ must be between 0 and 1 (e.g. logistic regression)
+\end{description}
+
+\paragraph{Canonical link}
+For every distribution a so called canonical link function (clf) exists which transforms $\eta$ to the defined distribution.
+
+\paragraph{Support in R}
+\lstinline{glm(..., family=poisson(link=identity))} a GLM can be fitted using different link functions. The default function is the canonical link function.
+
+\begin{tabular}{c|cccccc}
+	& binomial & gaussian & Gamma & inverse.gaussian & poisson & quasi \\
+	\hline 
+	logit & D & & & & & x \\
+	probit & x & & & & & x \\
+	cauchit & x & & & & &  \\
+	clolog & x & & & & & x \\
+	identity & & D & x & & x & x \\
+	inverse & & & D & & & x \\
+	log & x & & x & & D & x \\
+	$1/\mu^2$ & & & & D & & x \\
+	sqrt & & & & & x & x \\
+\end{tabular}
+
+\subsubsection{Fitting a GLM}
+
+Like a logistic model, a GLM is also fitted using a maximum likelihood estimator (MLE). For a robust fitting the \textbf{IRLS (Iteratively reweighted least squares) algorithm} can be used. It is basically a weighted MLE estimator to lower the influence of outliers.
