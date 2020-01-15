@@ -336,3 +336,66 @@ To estimate the flexible components for each predictor the backfitting algorithm
 		\item Center the estimated function to $\hat{f_k}(\cdot) \leftarrow \hat{f_k}(\cdot) - \frac{1}{n} \sum_{i=1}^{n} \hat{f_k}(x_i^{(k)})$
 	\end{enumerate}
 \end{enumerate}
+
+\subsection{Binary response}
+
+\subsubsection{Sunflower-Plot and proportion plot}
+
+The problem when plotting binary response variables is, that there are many measurements ``on the same point''. One way to overcome this problem when plotting binary response variable is to introduce a sunflower symbol for plotting. For every overlapping measurement, a new leaf is added to the sunflower.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.3\textwidth]{images/sunflower.png}
+	\caption{Example sunflower plot}
+\end{figure}
+
+Another way of visualizing binary data is by calculating the proportion of ``ones'' for each corresponding input value $x$. The aggregated data $\tilde{Y_k}$ can then be plotted again using the sunflower plot.
+
+\subsubsection{Logistic regression}
+
+The problem when using linear regression is, that the prediction is not bounded. While the aggregated $\tilde{Y_k}$ is always within the interval $[0, 1]$ the predicted value can be outside of this range.
+
+\mbox{}\\
+Such a logistic regression must have the following properties:
+\begin{enumerate}
+	\tightlist
+	\item The response Y is binary with possible values 0 and 1.\\
+	In other words: $Y \sim Bernoulli(\pi=unknown)$
+	\item $E(Y) = \pi$
+	\item $\pi(x_k) = G(\beta_0 + \beta_1 \cdot x_k)$ or $G^{-1}(\pi(x_k)) = \beta_0 + \beta_1 \cdot x_k$\\
+	With $x_k$ being the predictor variables and $G$ a distribution function.
+	\item This results in a latent variable $Z =\eta(x_k) = \beta_0 + \beta_1 \cdot x_k$. The response $Y$ maps $\eta$ to 1 if $Z > c$ or vice versa.
+	\item According to point 3: $\eta = G^{-1}(\pi)$. With $G^{-1}$ as \textbf{link function}.
+\end{enumerate}
+
+\paragraph{Popular choices for the distribution ($G()$) and link function ($G^{-1}()$)}\mbox{}\\
+\begin{tabular}{ccl}
+	\hline 
+	$G(\eta)$ & $G^{-1}(\pi)$ & Name \\ 
+	\hline 
+	$\exp(\eta)/(1+\exp(\eta))$& $log(\pi/(1-\pi))$  & logit model; logistic regression (generally preferred) \\ 
+	$\phi(\eta)$ & $\phi^{-1}(\eta)$ & probit model \\
+	$1-exp(-exp(\eta))$ & $log(-log(1-\pi))$ & complementary log-log model \\
+	\hline 
+\end{tabular}
+
+\paragraph{Odds}
+Instead of focusing on the probability of occurrence of an event we turn our attention to the ‘odds’ for success versus failure:
+\begin{equation*}
+odds = \frac{P(Y_i=1)}{P(Y_i=0)} = \frac{P(Y_i=1)}{1 - P(Y_i=1)} = \frac{\pi}{1-\pi}
+\end{equation*}
+
+Since the range of odds is between 0 and infinity, the log-odds (logarithmic odds) are often preferred:
+\begin{equation*}
+log(odds) = log(\frac{\pi}{1-\pi}) = \eta = \beta_0 + \sum_{j=1}^{m} \beta_j x^{(j)}
+\end{equation*}
+
+\paragraph{Empirical logits}
+
+Because the logit model is not defined for $g(0)$ and $g(1)$ (Latent variable $Z = g(Y)$) the empirical logits are often used:
+\begin{equation*}
+Z_k = log(\frac{Y_k + 0.5}{m_k-Y_k+0.5})
+\end{equation*}
+
+\subsubsection{Maximum Likelihood Estimator (MLE)}
+
+While the previously introduced estimators (e.g. least squares estimator) is good for fitting continuous (Gaussian like) data, it is not suitable for binary response variables where the response is either 0 or 1. In comparison th MLE is better suited for fitting non Gaussian like data because it can work with any distribution since it fits the parameter of the distribution.
