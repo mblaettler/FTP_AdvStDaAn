@@ -470,3 +470,79 @@ For every distribution a so called canonical link function (clf) exists which tr
 \subsubsection{Fitting a GLM}
 
 Like a logistic model, a GLM is also fitted using a maximum likelihood estimator (MLE). For a robust fitting the \textbf{IRLS (Iteratively reweighted least squares) algorithm} can be used. It is basically a weighted MLE estimator to lower the influence of outliers.
+
+\subsection{Model simplification and variable selection}
+
+The F-Score cannot be used for generalized linear models, since we cannot formulate an appropriate test statistic.
+
+\subsubsection{Residual deviance}
+
+The residual deviance is defined as:
+\begin{equation*}
+RD = 2\cdot (log-likelohood(M_S) - log-likelihood(M_P)) \sim \chi^2(df(M_S) - df(M_P))
+\end{equation*}
+
+With $M_S$ being the more saturated model and $M_P$ the proposed model. The $df()$ operator gets the degrees of freedom. The full saturated model or saturated model is a model which has the same amount of parameters as observations.
+
+\paragraph{Deviance Test}
+The deviance test is the F test counterpart to check if the proposed model is significantly better than saturated model. For this the p-value of $RD$ following a  $\chi^2(df(M_S) - df(M_P))$ distribution is calculated.
+
+\begin{lstlisting}
+DaR.glm <- glm(RDR ~ lPOP + lAR + lHR + lVH + lF+ IND, family=poisson,
+data=DaR)
+DaR.glm2 <- glm(RDR ~ lAR + lHR + lVH + IND, family=poisson, data=DaR)
+anova(DaR.glm, DaR.glm2, test="Chisq")
+\end{lstlisting}
+
+\paragraph{Null deviance}
+The null deviance can be used as an analogy for the F-test. Since the null deviance is the deviance of the null model (using the intercept only), a deviance test can be used to check if the found model is significantly better than the null model.
+
+\begin{lstlisting}
+MAC1.glm1 <- glm(cbind(Y, m-Y) ~ ac, family=binomial, MAC1)
+summary(MAC1.glm1)
+...showing just the deviance lines ...
+Null Deviance: 15.4334 on 5 degrees of freedom
+Residual Deviance: 1.7321 on 4 degrees of freedom
+
+1- pchisq(15.4334 - 1.7321, df=1)
+\end{lstlisting}
+
+\paragraph{Variable selection}
+AIC and stepwise model selection can also be used for GLMs.
+
+\subsubsection{Confidence intervals}
+
+There are two approaches for finding the confidence interval of GLMs, the \textbf{delta method} and \textbf{finding the confidence interval for $\eta$}.
+
+\paragraph{Delta method}
+Using the delta method, the confidence intervals are found using a Taylor expansion of $G(\vec{x_0^T}\vec{\hat{\beta}})$ at $\vec{x_0^T}\vec{\beta}$:
+
+\begin{equation*}
+G(\vec{x_0^T}\vec{\hat{\beta}}) \approx G(\vec{x_0^T}\vec{\beta}) + G^{'}(\vec{x_0^T}\vec{\beta}) (\vec{x_0^T}\vec{\hat{\beta}} - \vec{x_0^T}\vec{\beta})
+\end{equation*}
+
+Resulting in an approximately Gaussian distributed $G(\vec{x_0^T}\vec{\hat{\beta}})$:
+\begin{equation*}
+G(\vec{x_0^T}\vec{\hat{\beta}}) \sim \mathcal{N}\left (G(\vec{x_0^T}\vec{\beta}),\; G^{'}(\vec{x_0^T}\vec{\beta})^2 \vec{x_0}^T cov(\vec{\hat{\beta}})\vec{x_0}\right)
+\end{equation*}
+
+Therefore:
+\begin{equation*}
+G(\vec{x_0^T}\vec{\hat{\beta}}) \pm x_i = \begin{cases}
+q^\mathcal{N}_{1-\alpha/2}se(\hat{\mu_0};\phi=1) & if\; \phi = 1 \\
+q^{t_{n-p}}_{1-\alpha/2}se(\hat{\mu_0};\hat {\phi}) & if\: \phi\: has\: to\: be\: estimated
+\end{cases}
+\end{equation*}
+with:
+\begin{equation*}
+se(\hat{\mu_0};\phi) = \sqrt{\phi \left(h^{'}(\vec{x_0^T}\vec{\hat{\beta}})\right)^2 \vec{x_0}^T\bm{(X^TWX)^{-1}}\vec{x_0}}
+\end{equation*}
+
+\paragraph{Deviance based method}
+The approximation of the delta method (a.k.a \textbf{Wald test statistic}) is not good enough in all situations.
+
+\begin{equation*}
+T_D = \frac{D(\vec{y};\vec{\hat{\beta^{*k}}})-D(\vec{y};\vec{\hat{\beta}})}{\hat{\phi}} \leq q^{\chi^2_1}_{1-\alpha}
+\end{equation*}
+
+With $\beta^{*k}$ as the limit of the $\alpha$ confidence interval.
