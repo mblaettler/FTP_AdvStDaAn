@@ -546,3 +546,92 @@ T_D = \frac{D(\vec{y};\vec{\hat{\beta^{*k}}})-D(\vec{y};\vec{\hat{\beta}})}{\hat
 \end{equation*}
 
 With $\beta^{*k}$ as the limit of the $\alpha$ confidence interval.
+
+\subsection{Diagnostics and model improvement}
+
+\subsubsection{Estimation of the dispersion parameter $\phi$}
+
+Depending on the data structure which need to be fit, a different estimator is used:
+
+\paragraph{Gaussian model}
+\begin{equation*}
+\phi = \sigma^2 = MSE = \frac{1}{n-p}\sum_{i=1}^{n}(Y_i - \hat{\mu_i})
+\end{equation*}
+
+\paragraph{Gamma model}
+\begin{equation*}
+CV = \frac{1}{n-p}\sum_{i=1}^{n}\left(\frac{Y_i-\hat{\mu_i}}{\hat{\mu_i}}\right)^2
+\end{equation*}
+
+\paragraph{Binomial, Poisson and exponential models}
+With these models $\phi = 1$. Therefore, no estimation is required.
+
+\paragraph{Overdispersion}
+
+If $D \sim \chi^2_{n-p}$ is very unlikely an overdispersion happens. The most common case is the wrong structural form for the model. Other cases are:
+\begin{itemize}
+	\tightlist
+	\item The presence of a few outliers
+	\item Many points are identified as outliers
+\end{itemize}
+
+\subsubsection{Diagnostics -  Model adequacy checking}
+For GLMs there is no such thing a well-defined definition of residuals. The matrix $\bm{H}$ of a GLM fit is:
+\begin{equation*}
+\bm{H}=\bm{W}^{1/2}\bm{X}(\bm{X}^T\bm{W}\bm{X})^{-1}\bm{X}^T\bm{W}^{1/2}
+\end{equation*}
+
+\paragraph{Response residuals} The simplest method of defining a residual. Generally, note that $R_i$ will not be Gaussian distributed. 
+\begin{equation*}
+R_i = Y_i - \hat{\mu_i}
+\end{equation*}
+
+\paragraph{Pearson residuals}
+Often used. However, still not Gaussian distributed.
+\begin{equation*}
+R_i^{(P)} = R_i \cdot w_i/\sqrt{(V(\hat{\mu_i}))}
+\end{equation*}
+
+With $V(\cdot)$ as the variance function.
+
+\paragraph{Working residuals}
+These residuals mimic the residuals from classic linear models. However, they cannot be used to estimate the scale parameter $\phi = \sigma^2$ using the residual sum of squares. 
+\begin{equation*}
+R_i^{(W)} = R_i\cdot g'(\hat{\mu_i})
+\end{equation*}
+
+\paragraph{Deviance residuals}
+A definition of residuals to be used to estimate the scale paramater are the deviance residuals.
+\begin{gather*}
+R_i^{(D)} = sign(y_i - \hat{\mu_i})\sqrt{d_i} \\
+var\left(R_i^{(D)}\right)\approx \phi(1-H_{ii})
+\end{gather*}
+
+\subsubsection{Residual analysis}
+The residual analysis of GLMs differs from the one known in OLS slightly.
+
+\paragraph{Tukey-Anscombe plot}
+(Also called residual plot) In comparison to linear models, the Tukey-Anscombe plot plots the deviance residuals $R_i^{(D)}$ against the fitted linear predictor $\hat{\eta_i}$. When having a discrete response, caution is required, because the discreteness introduces distortion.\\
+It can be used to examine if the deviance does ``not depend on the linear predictor''. In case the plot is not around zero all the time, either dangerously influential outliers are within the data or the model choice is bad.
+
+\paragraph{Scale-Location Plot}
+In order to investigate the dependence of the variance on the fitted values, the scale-location plot is used. It plots the square-root of the absolute values of the standardized deviance residuals against the fitted linear predictor.\\
+In case there is nor flat line, the plot suggests, that there is a non-constant variability in the residuals. Hence, not all variance is captured by the model.
+
+\paragraph{Normal Q-Q Plot}
+Can only be used to interpret the response of non-binary responses and must be handled with care. In many cases, the residuals are not normally distributed or show great values even though the model does not fit the data.\\
+However, the plot is useful to examine overdispersion. It helps to determine if overdispersion happens due to a few outliers (non-linearity due to large residuals) or due to the assumed distribution being inappropriate (non-linearity due to large and small residuals).
+
+\paragraph{Residual vs leverage plot}
+We need to identify the leverage points and influential observations in addition to outliers. The cook's distance can also be used for GLMs:
+\begin{equation*}
+d_i = \frac{1}{p}\frac{R_i^2}{\hat{\phi}\cdot V(\hat{\mu_i})(1-H_{ii})}\frac{H_{ii}}{1-H_{ii}}
+\end{equation*}
+Observation with $d_i \geq 1$ are considered dangerously influential.
+
+\subsubsection{Generalised Additive Models (GAM)}
+These models extend the GLMs by replacing some or all linear terms of $\eta$ with appropriate smooth functions:
+\begin{equation*}
+\eta_i = \beta_0+\sum_{k=1}^{m}x_i^{(k)}\beta_k \; \rightarrow \; \eta_i = \sum_{k=1}^{m}f_k\left(x_i^{(k)}\right)
+\end{equation*}
+The GAMs are mainly used to fine appropriate transformations of explanatory variables.
