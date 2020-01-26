@@ -1,0 +1,118 @@
+\section{Introduction to Bayesian statistics}
+
+\subsection{Bayesian basics}
+
+The Bayesian approach is based on the idea, that a prior distribution of the data is assumed and the model is adjusted to this prior.
+
+To perform a Bayesian Data Analyses the following things are required:
+\begin{description}
+	\tightlist
+	\item[observed Data] The data you want to have conclusions from
+	\item[generativer Model] to generate new data according to your prior
+	\item[prior information] quantify the uncertainty of parameters in your model (i.e. by including prior information)
+\end{description}
+
+\subsubsection{Workflow for Binomial models}
+\begin{enumerate}
+	\tightlist
+	\item Run $n$ simulations of possible $\theta$ using the prior distribution.
+	\begin{lstlisting}
+prior = runif(n)
+	\end{lstlisting}
+	\item Build a generative model, which simulates the model based on the prior distribution of $\theta$.
+	\begin{lstlisting}
+generativemodel = function(theta) {
+	rbinom(1, nSamples, theta)
+}
+	\end{lstlisting}
+	\item Simulate $n$ times using the generative model
+	\begin{lstlisting}
+simdata = rep(NA, n)
+for(i in 1:n) {
+	simdata[i] = generativemodel( prior[i] )
+}
+	\end{lstlisting}
+	\item Calculate the posterior by checking which simulation resulted in the measured value(s)
+	\begin{lstlisting}
+posterior = prior[simdata == nSignedUp]
+	\end{lstlisting}
+\end{enumerate}
+
+Step 2 and 3 can be made in one step, in case the generative model is as simple as in the shown example:
+\begin{lstlisting}
+simdata = rbinom(n, nSamples, prior)
+\end{lstlisting}
+
+\paragraph{Inference}
+If a posterior is given, the following code snippets can be used for inference:
+\begin{lstlisting}
+mean(posterior) # the mean success rate
+quantile(posterior, c(0.05, 0.95)) # the 90% confidence interval
+
+# What's the probability of a success rate higher than x
+sum(posterior[posterior>x])/length(posterior)
+
+# If the experiment is repeated m samples, how big is the success rate
+successForM <- rbinom(length(posterior), m, posterior)
+\end{lstlisting}
+
+\subsubsection{Possible prior distributions}
+
+\paragraph{Uniform}
+In case there is no knowledge about the distribution of $\theta$ the uniform distribution should be used. For the prior the uniform distribution must have its limits at 0 and 1.
+
+\paragraph{Beta distribution}
+\begin{gather*}
+X\sim Beta(a, b)\\
+E(X) = \frac{a}{a+b}\\
+Var(X) = \frac{ab}{(a+b+1)(a+b^2)}\\
+mode(X) = \frac{a-1}{a+b-2}
+\end{gather*}
+
+Mode = position of $f(x)_{max}$.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{images/beta-examples.png}
+	\caption{Examples of the beta distribution using different a and b values}
+\end{figure}
+
+\subsection{Approximate Bayesian computation}
+\subsubsection{Conditional probability}
+\begin{gather*}
+P(A|B) = \frac{P(A\cap B)}{P(B)}\\
+P(A,B) = P(A|B)P(B) + P(B|A)P(A)\\
+\Rightarrow P(A|B) = \frac{P(B|A)P(A)}{P(B)} = \frac{P(B|A)P(A)}{\sum_{i=1}^{n}P(B|A_i)P(A_i)}
+\end{gather*}
+
+For Bayesian modeling:
+\begin{equation*}
+P(\theta|D) = \frac{P(D|\theta)P(\theta)}{P(D)} = \frac{P(D|\theta)P(\theta)}{\sum_{i=1}^{n}P(D|\theta_i)P(\theta_i)} \propto P(D|\theta)P(\theta)
+\end{equation*}
+
+\subsubsection{Rejection algorithm}
+Instead of throwing away all samples where the simulated data is not equal to the real data, one can set a small threshold $\epsilon$ to collect $||D_i-D||<\epsilon$ with $D$ as the Data and $D_i$ as simulated data. 
+
+\subsection{A/B testing}
+A/B testing is a way to compare two alternatives, typically by testing a subjects' response to variant A against variant B, and determining which of the two variant is more effective.
+
+\mbox{}\\
+This can be achieved by ``fitting'' two models and test the confidence intervals of parameter $\theta_A$ and $\theta_B$.
+
+\begin{lstlisting}
+A.prior = runif(n)
+B.prior = runif(n)
+
+A.sim = rbinom(n, numSamples, A.prior)
+B.sim = rbinom(n, numSamples, B.prior)
+
+ind = ((A.sim == A.success) & (B.sim == B.success))
+A.posterior = A.prior[ind]
+B.posterior = B.prior[ind]
+\end{lstlisting}
+
+\paragraph{Profit maximization}
+Is a special case of A/B testing where one of the variants might be more effective but more expensive, too. In this case, the profit maximization can be calculated using $\theta$ and the expected gain.
+\begin{equation*}
+profit_i = \theta \cdot (income_i - cost_i)
+\end{equation*}
