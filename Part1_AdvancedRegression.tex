@@ -635,3 +635,109 @@ These models extend the GLMs by replacing some or all linear terms of $\eta$ wit
 \eta_i = \beta_0+\sum_{k=1}^{m}x_i^{(k)}\beta_k \; \rightarrow \; \eta_i = \sum_{k=1}^{m}f_k\left(x_i^{(k)}\right)
 \end{equation*}
 The GAMs are mainly used to fine appropriate transformations of explanatory variables.
+
+\subsection{Some extensions of GLM}
+
+\subsubsection{Categorical responses}
+In case the response is categorical with more than two levels it is an extension of the binomial regression model. Generally it is distinguished by:
+\begin{description}
+	\tightlist
+	\item[Nominal data] where there is no natural order to the response	categories.
+	\item[Ordinal data] where there is an order in the data.
+\end{description}
+
+\paragraph{Contingency table}
+A contingency table is a type of table in a matrix format that displays the (multivariate) frequency distribution of categorical variables. Example:
+\begin{lstlisting}
+table(USes96$fAge, USes96$Party)
+           Democrat Independent Republican
+(0,25]         33          15         18
+(25,35]        76          54         73
+(35,45]        89          59         85
+(45,55]        68          48         52
+(55,65]        49          24         40
+(65,75]        41          24         34
+(75,100]       24          15         23
+\end{lstlisting}
+
+\paragraph{Mosaic plot}
+One way to visualize contingency tables is by using Mosaic plots. An example of those plots is shown bellow:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.8\textwidth]{images/example-mosaic.png}
+	\caption{Example visualization using a mosaic plot}
+\end{figure}
+
+\subsubsection{Multinomial logit model}
+Let $Y_l$ be a random variable coding response categories with values $1, 2, ..., L$. The probability for sample $i$ to be in category $l$ is known as $\pi_{il}$. The number of observation in category $l$ is known as $y_{il}$ and $n_i$ the number of individuals in observation $i$.
+\begin{equation*}
+n_i = \sum_{l=1}^{L}y_{il}
+\end{equation*}
+
+R-Code:
+\begin{lstlisting}
+library(nnet)
+multinom(Party ~ fAge + income + educ, data=USes96)
+
+# weights:  60 (38 variable)
+initial  value 1037.090001 
+iter  10 value 979.148422
+iter  20 value 976.235668
+iter  30 value 976.101052
+iter  40 value 976.098777
+iter  40 value 976.098774
+iter  40 value 976.098772
+final  value 976.098772 
+converged
+Call:
+multinom(formula = Party ~ fAge + income + educ, data = USes96)
+
+...
+
+Residual Deviance: 1952.198 
+AIC: 2028.198 
+\end{lstlisting}
+
+\paragraph{Inference}
+To check if the $k^{th}$ explanatory variable has a significant impact it is not possible to perform an individual hypothesis test. Unfortunately, \lstinline{anova()} is not able to do this calculation, we have to do them manually:
+\begin{lstlisting}
+mn1 <- multinom(Party ~ fAge + income + educ, data=USes96)
+mn2 <- multinom(Party ~ fAge + income, data=USes96)
+
+# Difference of deviances
+h1 <- deviance(mn2) - deviance(mn1)
+# Difference of df
+h2 <- abs(mn1$edf - mn2$edf)
+# p-value calculation
+pchisq(h1, h2, lower=FALSE)
+\end{lstlisting}
+
+\paragraph{Predict}
+To show the probability of samples belonging to a certain class use:
+\begin{lstlisting}
+predict(USes96.mn2, type="probs")
+\end{lstlisting}
+In case only the class needs to be known \lstinline{type="class"} can be used.
+
+\subsubsection{Ordinal multinomial responses}
+Multinomial responses are still categorical, but with a natural ordering among the categories.\\
+Example Mental Impairment: The goal was to relate mental impairment to socio-economic status and the frequency of potentially traumatic events in a persons’ life. The response variable has the following values: none, mild, moderate and impaired.
+
+\mbox{}\\
+When using ordinal multinomial response, it is possible to work with cumulative probabilities:
+\begin{equation*}
+\gamma_{il} = P(Y_i\leq l)
+\end{equation*}
+
+This approach makes it possible to model only (L-1) probabilities.
+
+R-Code:
+\begin{lstlisting}
+TODO: Code from slides does not work
+\end{lstlisting}
+
+\paragraph{Inference}
+For ordinal multinomial responses \lstinline{anova} can be used for comparison:
+
+\paragraph{Prediction}
+Identical properties as the multinomial logit model.
