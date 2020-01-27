@@ -250,3 +250,96 @@ Our data has a distribution of $X\sim Norm(\mu, \sigma^2)$ with a fixed mean $\m
 \end{equation*}
 
 \subsection{Markov chain Monte Carlo (MCMC) methods}
+
+\subsubsection{Monte carlo method}
+
+The idea of Monte Carlo simulation is to use i.i.d. samples of a random generator with density $p$ to approximate expectations.
+
+\paragraph{Stochastic integration}
+One possible usage of the Monte Carlo simulation is to integrate a complex function stochastically:
+\begin{lstlisting}
+# f: function to integrate
+f = function(x){return(x^2*cos(.6*x)+.2)}
+n = 1000
+hits = 0
+
+# simulate in area -1, 2 for X and 0, 2 for Y
+# -> dX = 3, dY = 2
+x_ = runif(n, -1, 2)
+y_ = runif(n, 0, 2)
+
+hits = sum(y_<f(x_))
+
+area = hits/n * (3*2) # dX * dY
+\end{lstlisting}
+
+\subsubsection{Markov chain}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{images/markov-chain-example.png}
+	\caption{Example of a Markov Chain}
+\end{figure}
+
+\paragraph{Equilibrium/stationary distribution}
+Every \textbf{ergodic} (irreducible and aperiodic) Markov chain has a stationary distribution $\pi$.\\
+Definitions:
+\begin{description}
+	\tightlist
+	\item[irreducible] A Markov Chain is irreducible if it is possible to get from any state to any other state.
+	\item[periodic] A Markov chain is periodic if you can visit certain states only at periodically recurrent time steps. Otherwise, a Markov chain is called \textbf{aperiodic}.
+\end{description}
+
+The stationary distribution can be found by the following equation:
+\begin{gather*}
+\pi_x = \sum_{y\in S}\pi_y\cdot P_{y\rightarrow x}\\
+\sum_{i=1}^{n}\pi_i = 1
+\end{gather*}
+
+\paragraph{Detailed balance}
+A Markov chain has the property of ``detailed balance'' in case it ends in the stationary distribution $\pi$ independent of the state, the chain started in. If $\pi$ fulfils the following equation, \textbf{detailed balance} is given:
+\begin{equation*}
+\pi_x\cdot P_{x\rightarrow y} = \pi_y\cdot P_{y\rightarrow x}
+\end{equation*}
+
+\subsubsection{Metropolis hastings}
+A metropolis hastting has the following components:
+\begin{description}
+	\tightlist
+	\item[A data generating distribution $Q$] To sample new proposals, a data generation distribution $Q$ is required.
+	\item[A prior distribution] The prior distribution of the parameter (can be uniform)
+	\item[A posterior distribution] with a prior distribution of each parameter(s)
+\end{description}
+
+Idea:
+\begin{enumerate}
+	\tightlist
+	\item Proposal: Simulate $z\sim Q$ and set $\theta_{prop} = \theta + z$
+	\item Metropolis Rejection: Simulate $u\sim Unif(0, 1)$\\
+	If $\frac{\pi(\theta_{prop})Q(\theta|\theta_{prop})}{\pi(\theta)Q(\theta_{prop}|\theta)}>u$ set $\theta = \theta_{prop}$
+\end{enumerate}
+Remarks: In case $\theta_{prop}$ is better than $\theta$,  $\theta_{prop}$ will always be updated (fraction gets positive). $u$ is a random parameter describing a ``how much worse parameter'' is accepted. In case the probability density function of $Q$ is symmetric (e.g. uniform or normal distribution), $Q(\theta|\theta_{prop}) = Q(\theta_{prop}|\theta)$. Therefore, the metropolis rejection is simplified:\\
+If $\frac{\pi(\theta_{prop})}{\pi(\theta)}>u$ set $\theta = \theta_{prop}$
+\begin{lstlisting}
+nrSignups =  6
+nrTotal   = 16
+
+nSimulations = 100000
+
+signUpRate_i = runif(1)
+
+sample_signUpRates = rep(NA,nSimulations)
+for(i in 1:nSimulations)
+{
+	# data generation Q
+	signUpRate_prop = runif(1)
+	u = runif(1)
+	if( u < (dbinom(nrSignups,nrTotal,signUpRate_prop)/dbinom(nrSignups,nrTotal,signUpRate_i)))
+	{
+		signUpRate_i = signUpRate_prop
+	}
+	sample_signUpRates[i] = signUpRate_i
+}
+
+# throw away burn in samples
+signUpRates = sample_signUpRates[500:nSimulations]
+\end{lstlisting}
