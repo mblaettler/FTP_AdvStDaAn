@@ -432,7 +432,7 @@ This results in the following parameters for common distributions:
 	Distribution & $E(Y) = \mu$ & $var(Y)$ & $b(\mu)$ & $V(\mu)$ & $\phi$ & w \\
 	\hline
 	$Gaussion(\mu, \sigma^2)$ & $\mu$ & $\sigma^2$ & $\mu$ & 1 & $\sigma^2$ & 1\\
-	$Binomial(m, \pi)$ & $\pi$ & $\frac{1}{m}\pi(1-\pi)$ & $log(\frac{\mu}{1-\mu})$ & $\mu(1-\mu)$ & 1 & m\\
+	$Binomial(m, \pi)$ & $m\cdot\pi$ & $\frac{1}{m}\pi(1-\pi)$ & $log(\frac{\mu}{1-\mu})$ & $\mu(1-\mu)$ & 1 & m\\
 	$Poisson(\lambda)$ & $\lambda$ & $\lambda$ & $log(\mu)$ & $\mu$ & 1 & 1\\
 	$Gamma(\alpha, \beta)$ & $\frac{\alpha}{\beta}$ & $\frac{\alpha}{\beta^2}$ & $-\frac{1}{\mu}$ & $\mu^2$ & $\frac{1}{\alpha}$ & 1\\
 	\hline
@@ -575,6 +575,11 @@ If $D \sim \chi^2_{n-p}$ is very unlikely an overdispersion happens. The most co
 	\item Many points are identified as outliers
 \end{itemize}
 
+To check for overdispersion check if your residual deviance is $\chi^2_{df}$ distributed:
+\begin{lstlisting}
+1-pchisq(<residual-deviance>, <df-residual-deviance>)
+\end{lstlisting}
+
 \subsubsection{Diagnostics -  Model adequacy checking}
 For GLMs there is no such thing a well-defined definition of residuals. The matrix $\bm{H}$ of a GLM fit is:
 \begin{equation*}
@@ -612,7 +617,8 @@ The residual analysis of GLMs differs from the one known in OLS slightly.
 
 \paragraph{Tukey-Anscombe plot}
 (Also called residual plot) In comparison to linear models, the Tukey-Anscombe plot plots the deviance residuals $R_i^{(D)}$ against the fitted linear predictor $\hat{\eta_i}$. When having a discrete response, caution is required, because the discreteness introduces distortion.\\
-It can be used to examine if the deviance does ``not depend on the linear predictor''. In case the plot is not around zero all the time, either dangerously influential outliers are within the data or the model choice is bad.
+It can be used to examine if the deviance does ``not depend on the linear predictor''. In case the plot is not around zero all the time, either dangerously influential outliers are within the data or the model choice is bad.\\
+Implies that the assumption of a constant expectation of the error holds.
 
 \paragraph{Scale-Location Plot}
 In order to investigate the dependence of the variance on the fitted values, the scale-location plot is used. It plots the square-root of the absolute values of the standardized deviance residuals against the fitted linear predictor.\\
@@ -628,6 +634,12 @@ We need to identify the leverage points and influential observations in addition
 d_i = \frac{1}{p}\frac{R_i^2}{\hat{\phi}\cdot V(\hat{\mu_i})(1-H_{ii})}\frac{H_{ii}}{1-H_{ii}}
 \end{equation*}
 Observation with $d_i \geq 1$ are considered dangerously influential.
+
+Rule of thumb for high leverage:
+\begin{equation*}
+	L_{crit} = 2\cdot \frac{p}{n}
+\end{equation*}
+With $n$ as the number of samples and $p$ the rank of the hat matrix $\bm{H}$ (which is equal to the number of $\beta$s).
 
 \subsubsection{Generalised Additive Models (GAM)}
 These models extend the GLMs by replacing some or all linear terms of $\eta$ with appropriate smooth functions:
