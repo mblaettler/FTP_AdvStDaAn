@@ -96,7 +96,14 @@ mtc1.vs <- step(mtc1.lm1,
 While the variable \lstinline{mtc1.vs} now contains the model with the lowest AIC, a summary of the optimization process can be collected using \lstinline{mtc1.vs$anova}.
 
 \paragraph{Compare two models using \lstinline{anova}}
-ToDo %TODO
+\lstinline{anova} has a null hypothesis of both models being exactly the same.\\
+=> $H_0: m_1 = m_2$.
+If the p-value is lower than the significance level $\alpha$, $H_0$ can be rejected.
+
+Example:
+\begin{lstlisting}
+anova(m1, m2)
+\end{lstlisting} 
 
 \subsubsection{Local Regression (LOESS)}
 In comparison to linear model, where a \textbf{line} is fitted on the data, the LOESS regression can be used to fit a \textbf{curve}.
@@ -482,7 +489,8 @@ The residual deviance is defined as:
 RD = 2\cdot (log-likelohood(M_S) - log-likelihood(M_P)) \sim \chi^2(df(M_S) - df(M_P))
 \end{equation*}
 
-With $M_S$ being the more saturated model and $M_P$ the proposed model. The $df()$ operator gets the degrees of freedom. The full saturated model or saturated model is a model which has the same amount of parameters as observations.
+With $M_S$ being the more saturated model and $M_P$ the proposed model. The $df()$ operator gets the degrees of freedom. The full saturated model or saturated model is a model which has the same amount of parameters as observations.\\
+\lstinline{confint} uses residual deviance for calculations. Therefore, it can be used for GLMs.
 
 \paragraph{Deviance Test}
 The deviance test is the F test counterpart to check if the proposed model is significantly better than saturated model. For this the p-value of $RD$ following a  $\chi^2(df(M_S) - df(M_P))$ distribution is calculated.
@@ -745,7 +753,10 @@ This approach makes it possible to model only (L-1) probabilities.
 
 R-Code:
 \begin{lstlisting}
-TODO: Code from slides does not work
+Mental$sLE <- sqrt(Mental$life)
+library(MASS)
+mi.polr <- polr(impair ~ ses + sLE, data=Mental)
+summary(mi.polr)
 \end{lstlisting}
 
 \paragraph{Inference}
