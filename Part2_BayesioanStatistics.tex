@@ -343,3 +343,141 @@ for(i in 1:nSimulations)
 # throw away burn in samples
 signUpRates = sample_signUpRates[500:nSimulations]
 \end{lstlisting}
+
+With $beta(4, 20)$ prior:
+\begin{lstlisting}
+nrSignups =  6
+nrTotal   = 16
+
+nSimulations = 100000
+
+signUpRate_i = runif(1)
+
+sample_signUpRates = rep(NA,nSimulations)
+for(i in 1:nSimulations)
+{
+	# data generation Q
+	signUpRate_prop = runif(1)
+	u = runif(1)
+	# the prior is only included here
+	if( u < (dbinom(nrSignups,nrTotal,signUpRate_prop)*dbeta(4, 20)/dbinom(nrSignups,nrTotal,signUpRate_i))*dbeta(4, 20))
+	{
+		signUpRate_i = signUpRate_prop
+	}
+	sample_signUpRates[i] = signUpRate_i
+}
+
+# throw away burn in samples
+signUpRates = sample_signUpRates[500:nSimulations]
+\end{lstlisting}
+
+\subsubsection{Full probabilistic model}
+Metropolis hasting with multiple parameters.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{images/full-probalistic-example.png}
+	\caption{Example of a full probabilistic model.}
+\end{figure}
+
+\begin{lstlisting}
+obs = c(2.27, 1.17, 3.58, 3.95, 3.13, -1.50, 4.71, 2.58, 4.05, 5.20)
+m = rnorm(1,1,10)
+s = rgamma(1,8,4)
+m_sample = s_sample = c()
+# Bayesian Data Analysis via MCMC
+for(i in 1:10000) {
+	mean_prop = rnorm(1,m,0.1)
+	sd_prop = abs(rnorm(1,s,0.1))
+	# R = product of P(x|D), P(mu|D), P(sigma|D) for each observation
+	R = prod(dnorm(obs,mean_prop,sd_prop))*dnorm(mean_prop,1,10)* dgamma(sd_prop,8,4)/prod(dnorm(obs,m,s))/dnorm(m,1,10)/dgamma(s,8,4)
+	u = runif(1,0,1)
+	if( R > u ) {
+		m = mean_prop
+		s = sd_prop
+	}
+	m_sample = c(m_sample,m)
+	s_sample = c(s_sample,s)
+}
+\end{lstlisting}
+
+Often $R$ is calculated by using the logarithmic posterior, to simplify calculation.
+\begin{lstlisting}
+# Observed data:
+obs_x = runif(12,0,10)
+obs_y = 3 * obs_x + 2 + rnorm(12,mean=0,sd=1)
+
+# Log of (unnormalized) posterior density
+logPosterior = function(b0_, b1_, sigma_){
+	sum(dnorm(b0_+b1_*obs_x - obs_y, 0, sigma_, log=T))
+}
+# Starting value
+b0 = runif(1,0,1)
+b1 = runif(1,0,1)
+sigma = runif(1,0,1)
+# Collect sample
+b0_sample = c()
+b1_sample = c()
+sigma_sample = c()
+for(i in 1:10000) {
+	b0_prop = rnorm(1,b0,0.1) # Q~Norm(0, 0.1)
+	b1_prop = rnorm(1,b1,0.1)
+	s_prop = abs(rnorm(1,sigma,0.1))
+	R = exp(logPosterior(b0_prop, b1_prop, s_prop)-logPosterior(b0, b1,
+	sigma))
+	u = runif(1,0,1)
+	if( u < R) {
+		b0 = b0_prop
+		b1 = b1_prop
+		sigma = s_prop
+	}
+	b0_sample = c(b0_sample,b0)
+	b1_sample = c(b1_sample,b1)
+	sigma_sample = c(sigma_sample,sigma)
+}
+\end{lstlisting}
+
+\subsubsection{Chain with filters}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.3\textwidth]{images/filter-chain.png}
+	\caption{An example filter chain}
+\end{figure}
+
+Find ``Posterior'' with $c_0=400, $$c_1=1200$ and $c_2=900$:\\
+\begin{equation*}
+(\alpha\cdot (1-\beta))^{1200}\cdot((1-\alpha)(1-\beta/2))^{900}\cdot (\alpha\cdot\beta + (1-\alpha)\beta/2)^{400}
+\end{equation*}
+And ``logPosterior'':
+\begin{equation*}
+1200\cdot log(\alpha\cdot (1-\beta))+900\cdot log((1-\alpha)(1-\beta/2)) +  400\cdot log(\alpha\cdot\beta + (1-\alpha)\beta/2)
+\end{equation*}
+\begin{lstlisting}
+# Here with additional prior distributions for a and b
+logStatDist = function(a_,b_)
+{
+	return(1200*log(a_*(1-b_)) + 900*log((1-a_)*(1-b_/2)) + 400*log(a_*b_+(1-a_)*b_/2) + dunif(a_,0.5,1,log=TRUE) + dbeta(b_,1.1,9.9,log=TRUE))
+}
+# number of samples
+n = 100000
+# Starting value
+a = runif(1,0.5,1)
+b = rbeta(1,1.1,9.9)
+# Collect sample
+a_sample = rep(NA,n)
+b_sample = rep(NA,n)
+#  Bayesian Data Analysis via MCMC
+for(i in 1:n)
+{
+	a_prop = runif(1,a-0.01,a+0.01)
+	b_prop = runif(1,b-0.01,b+0.01)
+	R =  exp(logStatDist(a_prop,b_prop)-logStatDist(a,b))
+	u = runif(1,0,1)
+	if( R > u)
+	{
+		a = a_prop
+		b = b_prop
+	}
+	a_sample[i] = a
+	b_sample[i] = b
+}
+\end{lstlisting}
