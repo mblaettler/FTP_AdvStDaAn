@@ -202,3 +202,49 @@ With a Beta-binomial prior on M i.e. $M\sim BetaBin(N, a, b)$ the posterior dist
 \begin{equation*}
 M-m\sim BetaBin(N-n, a+m, b+n-m)
 \end{equation*}
+
+\subsubsection{Exponential model}
+The exponential distribution takes values in $\mathbb{R}_0^+$ representing the waiting time until the occurrence of an event.
+\begin{gather*}
+X\sim Exp(\lambda)\\
+p(x) = p(x|\lambda) = \lambda e^{-\lambda x}\\
+E(X) = {1\over\lambda}\\
+Var(X) = {1\over\lambda^2}
+\end{gather*}
+
+The conjugate prior for the exponential model is the Gamma distribution. With $\lambda\sim Gamme(a, b)$ as prior, the posterior is:
+\begin{equation*}
+\lambda|D\sim Gamma(a+n, b+\sum_{i=1}^{n}t_i)
+\end{equation*}
+
+\paragraph{Properties}
+The exponential distribution is \textbf{memoryless}. The waiting time until a certain event occurs, does not depend on how much time has elapsed already. The probability for the time to the next event stays the same and is independent when you start the observation.
+
+\mbox{}\\
+Consider you have n identical components. Each component has the same failure rate $\lambda$. Then, the failure rate for observing a failure in one of the $n$ components is $n\lambda$.
+
+\subsubsection{Gaussian distribution}
+The Gaussian or Normal distribution is very common in statistics and takes values in $\mathbb{R}$. The central limit theorem shows that under weak conditions i.i.d. observations converge to a normal distribution.
+\begin{gather*}
+X\sim Norm(\mu, \sigma^2)\\
+E(X) = Mode(X) = \mu\\
+Var(X) = \sigma^2
+\end{gather*}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.7\textwidth]{images/gaussian-details.png}
+	\caption{Some details of the Gaussian distribution}
+\end{figure}
+
+\paragraph{Conjugate prior for $\mu$}
+Our data has a distribution of $X\sim Norm(\mu, \sigma^2)$ with a fixed standard deviation $\sigma$. With a normal prior $\mu\sim Norm(m, s^2)$ the posterior distribution for $\mu$ is:
+\begin{equation*}
+\mu|D\sim Norm\left((\frac{m}{s^2}+\frac{\sum_{i=1}^{n}x_i}{\sigma^2})(\frac{1}{s^2}+\frac{n}{\sigma^2})^{-1}, (\frac{1}{s^2}+\frac{n}{\sigma^2})^{-1}\right)
+\end{equation*}
+
+\paragraph{Conjugate prior for $\sigma$}
+Our data has a distribution of $X\sim Norm(\mu, \sigma^2)$ with a fixed mean $\mu$. With a Gamma(a, b) prior on the precision $\tau$, where $\tau = \frac{1}{\sigma^2}$ the posterior distribution of $\tau$ is:
+\begin{equation*}
+\tau|D\sim Gamma\left(a+\frac{n}{2}, b+\frac{\sum_{i=1}^{n}(x_i-\mu)^2}{2}\right)
+\end{equation*}
